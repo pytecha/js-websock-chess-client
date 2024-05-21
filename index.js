@@ -207,17 +207,18 @@
             node.classList.add("show");
             node.scrollIntoView({ behavior: "smooth" });
         } else if (event.data[0] == '1') {
-            const i = event.data.slice(2).split(";")[0];
+            const [i, u] = event.data.slice(2).split(";");
             const node = document.createElement("span");
             console.log(JSON.stringify(event.data));
             node.setAttribute("data-match", event.data.slice(2));
-            node.innerHTML = `<span data-msub="">${i.slice(1).padStart(2, "0") + ":00"}</span><span class="${i[0] == '1' ? "black" : "white"}" data-msub="">${CMUND[0]}</span><span data-msub="">Anonymous</span>`
+            node.innerHTML = `<span data-msub="">${i.slice(1).padStart(2, "0") + ":00"}</span><span class="${i[0] == '1' ? "black" : "white"}" data-msub="">${CMUND[0]}</span><span data-msub="">${USER_ID == u ? "Host" : "Anonymous"}</span>`
             gameBoard.querySelector("#game-lobby").children[1].appendChild(node);
             setTimeout(function () { node.scrollIntoView({ behavior: "smooth", block: "nearest" }) }, 100);
         } else if (event.data[0] == '3') {
             GAMEON = true;
             if (!MATCH) {
                 ws.send(event.data);
+                MATCH = event.data.slice(2);
                 showAlerts({ msg1: "Match offer accepted" });
             }
             PLAYAS = parseInt(event.data[2]);
@@ -286,7 +287,12 @@
                 ws.send('4;@' + MOVE.pcat + MOVE.frm + MOVE.to + '=' + " QRBN"[e.target.dataset.promo]);
                 e.target.parentElement.style.display = "none";
             } else if (e.target.hasAttribute("data-msub")) {
-                ws.send("1;" + e.target.parentElement.dataset.match);
+                const match = e.target.parentElement.dataset.match;
+                if (match?.slice(-2) == USER_ID) {
+                    showAlerts({ msg1: "Match offer not sent" });
+                    return;
+                }
+                ws.send("1;" + match);
                 showAlerts({ msg1: "Match offer sent" });
             }
         } else if (e.target.tagName == "BUTTON") {
